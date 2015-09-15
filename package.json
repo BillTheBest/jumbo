@@ -1,0 +1,46 @@
+{
+  "author": {
+    "name": "Patrik Simek",
+    "url": "https://www.integromat.com"
+  },
+  "name": "jumbo",
+  "description": "Jumbo",
+  "keywords": [
+    "postgres",
+    "postgresql",
+    "pg",
+    "pgdiff",
+    "diff",
+    "sql",
+    "deploy",
+    "sync",
+    "synchronization"
+  ],
+  "version": "0.1.0",
+  "main": "lib/router.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/integromat/jumbo"
+  },
+  "dependencies": {
+    "async": "^1.4.2",
+    "body-parser": "^1.13.3",
+    "debug": "^2.2.0",
+    "express": "^4.13.3",
+    "jade": "^1.11.0",
+    "pg": "^4.4.1"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.10.0",
+    "mocha": "^2.3.2"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "bin": {
+    "jumbo": "./bin/jumbo"
+  }
+}

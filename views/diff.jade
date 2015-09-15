@@ -1,0 +1,64 @@
+extends ./layout
+
+append meta
+	title Jumbo
+
+block content
+	+header()
+	
+	div.container.content.content-index
+		div.pull-right
+			button.btn.btn-primary.jumbo-sync(type='button') Sync
+			| &nbsp;
+			button.btn.btn-primary.jumbo-resolve-all(type='button') Resolve All
+		
+		h1 Jumbo
+		
+		each category in jumbo.diff.categories
+			h2= category.label
+			
+			table.table
+				colgroup
+					col(width='70%')
+					col(width='10%')
+					col(width='10%')
+					col(width='10%')
+					
+				tr
+					th Item
+					th= jumbo.diff.a.config.name
+					th= jumbo.diff.b.config.name
+					th
+					
+				each action in category.actions
+					tr(class=action.do ? null : 'collapse')
+						td= action.name
+							if (action.do)
+								pre= action.do
+						
+						td
+							if (action.a)
+								span.glyphicon.glyphicon-ok-sign.text-success
+							
+							else
+								span.glyphicon.glyphicon-remove-sign.text-danger
+							
+						td
+							if (action.b)
+								if (action.a && action.do)
+									span.glyphicon.glyphicon-question-sign.text-warning
+									
+								else
+									span.glyphicon.glyphicon-ok-sign.text-success
+							
+							else
+								span.glyphicon.glyphicon-remove-sign.text-danger
+								
+						td
+							if (action.do)
+								button.btn.btn-primary.btn-xs.jumbo-resolve(type='button', data-type='diff', data-type-id=jumbo.diff.id, data-id=action.id) resolve
+	
+	+footer()
+
+append scripts
+	script(type="text/javascript", src="#{jumbo.prefix}/jumbo.js")

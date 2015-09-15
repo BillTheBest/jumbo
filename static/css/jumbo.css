@@ -1,0 +1,10 @@
+pre {
+    overflow: auto;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    white-space: pre !important;
+}
+
+table.table {
+	table-layout: fixed;
+}

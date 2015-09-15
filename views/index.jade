@@ -1,0 +1,17 @@
+extends ./layout
+
+append meta
+	title Jumbo
+
+block content
+	+header()
+	
+	div.container.content.content-index
+		h1 Jumbo
+		
+		div.center
+			a.btn.btn-lg.btn-primary(href='#{jumbo.prefix}/create/diff') Diff Schema
+			| &nbsp;
+			a.btn.btn-lg.btn-primary(href='#{jumbo.prefix}/create/sync') Sync Data
+	
+	+footer()

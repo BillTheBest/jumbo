@@ -1,0 +1,21 @@
+include mixins
+
+doctype html
+html(lang='en', data-prefix=jumbo.prefix)
+	head
+		meta(charset="utf-8")
+		meta(http-equiv="X-UA-Compatible", content="IE=EDGE")
+		meta(name="viewport", content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")
+		block meta
+		link(rel="stylesheet", href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css")
+		link(rel="stylesheet", href="/css/jumbo.css")
+		block styles
+		
+	body
+		block content
+
+		script(type="text/javascript", src="https://code.jquery.com/jquery-2.1.4.min.js")
+		script(type="text/javascript", src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js")
+		script(type="text/javascript", src="https://cdnjs.cloudflare.com/ajax/libs/async/1.4.2/async.min.js")
+		script(type="text/javascript", src="/js/jumbo.js")
+		block scripts

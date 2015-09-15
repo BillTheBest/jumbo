@@ -1,0 +1,11 @@
+extends ./layout
+
+append meta
+	title Exception | Jumbo
+
+block content
+	div.container.content.content-errors
+		div.i-error-icon(href="/") Exception
+		
+		h2.text-muted= error.name
+		h1= error.message

@@ -1,0 +1,61 @@
+extends ./layout
+
+append meta
+	title Jumbo
+
+block content
+	+header()
+	
+	div.container.content.content-index
+		div.pull-right
+			button.btn.btn-primary.jumbo-sync(type='button') Sync
+			| &nbsp;
+			button.btn.btn-primary.jumbo-resolve-all(type='button') Resolve All
+		
+		h1 Jumbo
+		
+		h2 Sync Tables
+		
+		table.table
+			colgroup
+				col(width='70%')
+				col(width='10%')
+				col(width='10%')
+				col(width='10%')
+				
+			tr
+				th Item
+				th= jumbo.sync.a.config.name
+				th= jumbo.sync.b.config.name
+				th
+				
+			each table in jumbo.sync.tables
+				tr(class=table.action.do ? null : 'collapse')
+					td= table.action.name
+						if (table.action.do)
+							pre= table.action.do
+						
+						if (table.action.error)
+							pre= table.action.error
+					
+					td
+						span.glyphicon.glyphicon-ok-sign.text-success
+						
+					td
+						if (table.action.error)
+							span.glyphicon.glyphicon-remove-sign.text-danger
+						
+						else if (table.action.do)
+							span.glyphicon.glyphicon-question-sign.text-warning
+							
+						else
+							span.glyphicon.glyphicon-ok-sign.text-success
+							
+					td
+						if (table.action.do && !table.action.error)
+							button.btn.btn-primary.btn-xs.jumbo-resolve(type='button', data-type='sync', data-type-id=jumbo.sync.id, data-id=table.action.id) resolve
+	
+	+footer()
+
+append scripts
+	script(type="text/javascript", src="#{jumbo.prefix}/jumbo.js")
