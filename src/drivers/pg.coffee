@@ -418,20 +418,20 @@ class PGColumn extends Column
 			txt.push "alter table #{@table.name} alter column #{@name} type #{@type} using #{@name}::#{@type};"
 		
 		if @default isnt b.default
-			out.push "-- default of '#{@name}' changed from '#{b.default}' to '#{@default}'"
+			txt.push "-- default of '#{@name}' changed from '#{b.default}' to '#{@default}'"
 			
 			if @default
-				out.push "alter table #{@table.name} alter column #{@name} set default #{@default};"
+				txt.push "alter table #{@table.name} alter column #{@name} set default #{@default};"
 			else
-				out.push "alter table #{@table.name} alter column #{@name} drop default;"
+				txt.push "alter table #{@table.name} alter column #{@name} drop default;"
 			
 		if @notnull isnt b.notnull
-			out.push "-- not null of '#{@name}' changed from '#{if b.notnull then 'not null' else 'null'}' to '#{if @notnull then 'not null' else 'null'}'"
+			txt.push "-- not null of '#{@name}' changed from '#{if b.notnull then 'not null' else 'null'}' to '#{if @notnull then 'not null' else 'null'}'"
 			
 			if @notnull
-				out.push "alter table #{@table.name} alter column #{@name} set not null;"
+				txt.push "alter table #{@table.name} alter column #{@name} set not null;"
 			else
-				out.push "alter table #{@table.name} alter column #{@name} drop not null;"
+				txt.push "alter table #{@table.name} alter column #{@name} drop not null;"
 
 		if txt.length is 0
 			return null # no changes
@@ -703,6 +703,9 @@ class PGRecord extends Record
 						# json array
 						PGRecord.sanitizeValue JSON.stringify value
 				
+				else if Buffer.isBuffer value
+					"E'\\\\x#{value.toString 'hex'}'"
+				
 				else if type in ['json', 'jsonb']
 					PGRecord.sanitizeValue JSON.stringify value
 				
@@ -741,6 +744,9 @@ class PGRecord extends Record
 							return false
 					
 					return true
+				
+				else if Buffer.isBuffer(a) and Buffer.isBuffer(b)
+					return a.equals b
 				
 				else
 					return JSON.stringify(a) is JSON.stringify(b)
