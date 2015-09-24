@@ -4,6 +4,8 @@ path = require 'path'
 express = require 'express'
 debug = require('debug') 'jumbo:router'
 
+EXPIRATION_TIMEOUT = 10 * 60 * 1000 # 10m
+
 Diff = require './diff'
 Sync = require './sync'
 
@@ -33,6 +35,11 @@ module.exports = (options) ->
 			if err then return next err
 			
 			res.redirect "#{prefix}/diff/#{diff.id}"
+		
+		setTimeout ->
+			delete diffs[diff.id]
+		
+		, EXPIRATION_TIMEOUT
 	
 	router.get '/create/sync', (req, res, next) ->
 		sync = new Sync options
@@ -41,6 +48,11 @@ module.exports = (options) ->
 			if err then return next err
 			
 			res.redirect "#{prefix}/sync/#{sync.id}"
+		
+		setTimeout ->
+			delete syncs[sync.id]
+		
+		, EXPIRATION_TIMEOUT
 	
 	router.param 'diff', (req, res, next, id) ->
 		if not diffs[id]
