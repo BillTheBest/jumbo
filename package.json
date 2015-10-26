@@ -16,7 +16,7 @@
     "sync",
     "synchronization"
   ],
-  "version": "0.1.2",
+  "version": "0.1.3",
   "main": "lib/router.js",
   "repository": {
     "type": "git",

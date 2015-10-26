@@ -228,7 +228,7 @@ class PGDatabase extends Database
 								column.type = if col.type is 'bigint' then 'bigserial' else 'serial'
 								column.default = null
 							
-							column.definition = "#{column.name} #{column.type}#{if column.notnull then " not null" else ""}#{if column.default then " default #{column.default}" else ""}"
+							column.definition = "\"#{column.name}\" #{column.type}#{if column.notnull then " not null" else ""}#{if column.default then " default #{column.default}" else ""}"
 							
 							table.columns.push column
 						
@@ -689,6 +689,9 @@ class PGRecord extends Record
 		
 		if 'function' is typeof value.toPostgres
 			value = value.toPostgres()
+			
+			if type is 'interval' and value is ""
+				value = "0"
 		
 		switch typeof value
 			when 'string' then return PGRecord.sanitizeValue value
@@ -708,6 +711,9 @@ class PGRecord extends Record
 				
 				else if type in ['json', 'jsonb']
 					PGRecord.sanitizeValue JSON.stringify value
+				
+				else if type is 'point'
+					return "'(#{value.x},#{value.y})'"
 				
 				else
 					return "unknown"
@@ -767,7 +773,7 @@ class PGRecord extends Record
 			
 			if not PGRecord.compareValue cola.value, colb.value, cola.type
 				#console.log 'COMPARE', cola.name, cola.value, colb.value
-				changes.push "#{cola.name} = #{PGRecord.castValue cola.value, cola.type}"
+				changes.push "\"#{cola.name}\" = #{PGRecord.castValue cola.value, cola.type}"
 		
 		if changes.length is 0
 			return null
@@ -782,7 +788,7 @@ class PGRecord extends Record
 		values = []
 		
 		for col in @columns
-			columns.push col.name
+			columns.push "\"#{col.name}\""
 			values.push PGRecord.castValue col.value, col.type
 		
 		"insert into #{@table} (#{columns.join ', '}) values (#{values.join ', '});"
@@ -793,9 +799,9 @@ class PGRecord extends Record
 			value = PGRecord.castValue col.value, col.type
 			
 			if value is 'null'
-				where.push "#{col.name} is null"
+				where.push "\"#{col.name}\" is null"
 			else
-				where.push "#{col.name} = #{value}"
+				where.push "\"#{col.name}\" = #{value}"
 		
 		"delete from #{@table} where #{where.join ' and '};"
 	
@@ -808,9 +814,9 @@ class PGRecord extends Record
 			value = PGRecord.castValue col.value, col.type
 			
 			if value is 'null'
-				where.push "#{col.name} is null"
+				where.push "\"#{col.name}\" is null"
 			else
-				where.push "#{col.name} = #{value}"
+				where.push "\"#{col.name}\" = #{value}"
 		
 		"update #{@table} set #{sql} where #{where.join ' and '};"
 
