@@ -7,6 +7,21 @@ class Record
 		# to prevent enumeration of byName
 		Object.defineProperty @columns, 'byName',
 			value: {}
+		
+		# to prevent enumeration of byName
+		Object.defineProperty @columns, 'ignore',
+			value: (ignored) ->
+				if not Array.isArray ignored
+					ignored = [ignored]
+				
+				for name in ignored
+					@byName[name] = undefined
+					
+					for item, index in @ when item.name is name
+						@splice index, 1
+						break
+				
+				@
 	
 	get: (name) ->
 		@columns.byName[name]

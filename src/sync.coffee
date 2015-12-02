@@ -124,7 +124,7 @@ class Table
 	name: ''
 	action: null
 	
-	constructor: (@sync, @name, options) ->
+	constructor: (@sync, @name, @options) ->
 	
 	compare: (done) ->
 		async.map ['a', 'b'], (server, next) =>
@@ -145,6 +145,11 @@ class Table
 				# both has primary keys so we can compare changes
 				
 				debug "table '#{@name}' - primary key is present on both tables"
+				
+				if Array.isArray(@options.ignore) and @options.ignore.length
+					# remove ignored columns
+					a.records.forEach (item) => item.columns.ignore @options.ignore
+					b.records.forEach (item) => item.columns.ignore @options.ignore
 
 				if a.length and b.length
 					# compare columns to make sure both tables are the same
