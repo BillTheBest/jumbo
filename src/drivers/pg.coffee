@@ -450,8 +450,8 @@ class PGConstraint extends Constraint
 
 		if @definition isnt b.definition
 			txt.push "-- recreate constraint '#{@name}'"
-			txt.push "alter table #{@name} drop constraint #{@name};"
-			txt.push "alter table #{@name} add constraint #{@name} #{@definition};"
+			txt.push "alter table #{@table.name} drop constraint #{@name};"
+			txt.push "alter table #{@table.name} add constraint #{@name} #{@definition};"
 
 		if txt.length is 0
 			return null # no changes
