@@ -128,7 +128,7 @@ class Table
 	
 	compare: (done) ->
 		async.map ['a', 'b'], (server, next) =>
-			@sync[server].download @name, next
+			@sync[server].download @name, @options, next
 		
 		, (err, recordsets) =>
 			if err then return done err

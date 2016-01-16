@@ -96,15 +96,19 @@ class PGDatabase extends Database
 			
 				done null, result.rows, result.fields
 	
-	download: (table, done) ->
+	download: (table, options, done) ->
 		# find out primary keys
 		@_query "select a.attname, format_type(a.atttypid, a.atttypmod) as atttype, (select true from pg_index i where a.attrelid = i.indrelid and a.attnum = any(i.indkey) and i.indisprimary) as attprim from pg_catalog.pg_attribute a where a.attrelid = $1::regclass and a.attnum > 0 and not a.attisdropped order by a.attnum asc", [table], (err, columns) =>
 			if err then return done err
 			
 			pkey = (col.attname for col in columns when col.attprim)
 			if pkey.length is 0 then pkey = null
+			
+			options ?= {}
+			options.filter ?= []
+			where = ("#{f.column} #{f.operator} $#{i + 1}" for f, i in options.filter)
 
-			@_query "select * from #{table};", (err, rows) ->
+			@_query "select * from #{table}#{if where.length then " where #{where.join ' and '}" else ""};", (f.value for f in options.filter), (err, rows) ->
 				if err then return done err
 				
 				recordset = new Recordset
@@ -225,7 +229,7 @@ class PGDatabase extends Database
 							column.default = col.default
 							
 							if col.sequence
-								column.type = if col.type is 'bigint' then 'bigserial' else 'serial'
+								column.type = if col.type is 'bigint' then 'bigserial' else if col.type is 'smallint' then 'smallserial' else 'serial'
 								column.default = null
 							
 							column.definition = "\"#{column.name}\" #{column.type}#{if column.notnull then " not null" else ""}#{if column.default then " default #{column.default}" else ""}"
@@ -440,18 +444,18 @@ class PGColumn extends Column
 
 class PGConstraint extends Constraint
 	@create: (a) ->
-		"alter table #{a.table.name} add constraint #{a.name} #{a.definition};"
+		"alter table #{a.table.name} add constraint \"#{a.name}\" #{a.definition};"
 	
 	@drop: (b) ->
-		"alter table #{b.table.name} drop constraint #{b.name};"
+		"alter table #{b.table.name} drop constraint \"#{b.name}\";"
 		
 	compare: (b) ->
 		txt = []
 
 		if @definition isnt b.definition
 			txt.push "-- recreate constraint '#{@name}'"
-			txt.push "alter table #{@table.name} drop constraint #{@name};"
-			txt.push "alter table #{@table.name} add constraint #{@name} #{@definition};"
+			txt.push "alter table #{@table.name} drop constraint \"#{@name}\";"
+			txt.push "alter table #{@table.name} add constraint \"#{@name}\" #{@definition};"
 
 		if txt.length is 0
 			return null # no changes
@@ -630,8 +634,6 @@ class PGPrivilege
 					txt.push "grant #{withGrant.join ', '} on #{target}\n  to #{grantee} with grant option;"
 	
 			else
-				console.log object.__type, object.name, a, b
-				
 				txt.push "revoke all on #{target}\n  from #{grantee};"
 		
 		if txt.length is 0

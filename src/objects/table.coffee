@@ -28,7 +28,7 @@ COMPARE = (a, b = []) ->
 		else
 			# only b has it
 			sql = foundb[kind].constructor.drop.call @, foundb[kind]
-			txt.push sql if sql
+			txt.unshift sql if sql # drops first
 	
 	if txt.length is 0
 		return null # no changes
