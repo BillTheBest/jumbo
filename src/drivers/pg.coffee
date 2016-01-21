@@ -195,7 +195,7 @@ class PGDatabase extends Database
 					from pg_constraint o
 					where o.conrelid = c.oid) as relcon,
 					
-					(select json_agg(json_build_object('name', cc.relname, 'def', pg_get_indexdef(ii.indexrelid, 0, true)))
+					(select json_agg(json_build_object('name', n.nspname || '.' || cc.relname, 'def', pg_get_indexdef(ii.indexrelid, 0, true)))
 					from pg_index ii
 					inner join pg_class cc on cc.oid = ii.indexrelid
 					where ii.indrelid = c.oid and not ii.indisprimary and not ii.indisunique) as relind,
@@ -523,11 +523,14 @@ class PGFunction extends Function
 	@normalizeName: (name) ->
 		parts = name.match(/^([^\(]+)\(([^\)]*)\)$/)
 		args = parts[2].split(/,\s/).filter (arg) ->
-			if (/^OUT\s/).test arg then return false
+			if (/^OUT\s/i).test arg then return false
 			true
 		
 		args = args.map (arg) ->
-			arg.substr arg.indexOf(' ') + 1
+			if (/^IN\s/i).test arg
+				arg.replace(/^IN\s/i, '')
+			else
+				arg
 		
 		"#{parts[1]}(#{args.join ', '})"
 		
