@@ -40,6 +40,7 @@ PRIVILEGE =
 
 class PGDatabase extends Database
 	defaultPrivileges: null
+	ignoredUsers: null
 	
 	constructor: ->
 		super arguments...
@@ -143,7 +144,7 @@ class PGDatabase extends Database
 					if err then return done err
 
 					for row in rows
-						@defaultPrivileges[CLASS[row.defaclobjtype]] = PGPrivilege.fromACL row.defaclacl
+						@defaultPrivileges[CLASS[row.defaclobjtype]] = PGPrivilege.fromACL @ignoredUsers, row.defaclacl
 					
 					next()
 
@@ -171,10 +172,10 @@ class PGDatabase extends Database
 						schema.id = row.oid
 						schema.name = row.nspname
 						schema.owner = row.rolname
-						schema.privileges = PGPrivilege.fromACL row.nspacl, schema
+						schema.privileges = PGPrivilege.fromACL @ignoredUsers, row.nspacl, schema
 						
 						for acl in row.nspdefacl ? []
-							schema.defaultPrivileges[CLASS[acl.type]] = PGPrivilege.fromACL acl.defaclacl
+							schema.defaultPrivileges[CLASS[acl.type]] = PGPrivilege.fromACL @ignoredUsers, acl.defaclacl
 						
 						@schemas.push schema
 					
@@ -218,7 +219,7 @@ class PGDatabase extends Database
 						table.id = row.oid
 						table.name = row.relname
 						table.owner = row.rolname
-						table.privileges = PGPrivilege.fromACL row.relacl, table
+						table.privileges = PGPrivilege.fromACL @ignoredUsers, row.relacl, table
 						
 						for col in row.relcols ? []
 							column = new PGColumn
@@ -274,7 +275,7 @@ class PGDatabase extends Database
 						func.name = PGFunction.normalizeName row.proname
 						func.owner = row.rolname
 						func.definition = row.prosrc
-						func.privileges = PGPrivilege.fromACL row.proacl, func
+						func.privileges = PGPrivilege.fromACL @ignoredUsers, row.proacl, func
 						
 						@functions.push func
 					
@@ -290,7 +291,7 @@ class PGDatabase extends Database
 						view.name = row.relname
 						view.owner = row.rolname
 						view.definition = row.relsrc
-						view.privileges = PGPrivilege.fromACL row.relacl, view
+						view.privileges = PGPrivilege.fromACL @ignoredUsers, row.relacl, view
 						
 						@views.push view
 					
@@ -595,16 +596,16 @@ class PGPrivilege
 	constructor: ->
 		@grants = []
 	
-	@compare: (object, a, b = []) ->
+	@compare: (ignoredUsers, object, a, b = []) ->
 		txt = []
 		privileges = {}
 		target = "#{if object.__type is 'view' then 'table' else object.__type} #{object.name}"
 
-		for privilege in a
+		for privilege in a when privilege.grantee not in ignoredUsers
 			privileges[privilege.grantee] =
 				a: privilege
 		
-		for privilege in b
+		for privilege in b when privilege.grantee not in ignoredUsers
 			privileges[privilege.grantee] ?= {}
 			privileges[privilege.grantee].b = privilege
 
@@ -644,13 +645,13 @@ class PGPrivilege
 		
 		txt.join '\n'
 	
-	@fromACL: (acl, object) ->
+	@fromACL: (ignoredUsers, acl, object) ->
 		if not acl
 			arr = []
 		else
 			arr = (PGPrivilege.parseACL item for item in acl.substr(1, acl.length - 2).split ',')
 			
-		arr.compare = PGPrivilege.compare.bind null, object, arr
+		arr.compare = PGPrivilege.compare.bind null, ignoredUsers, object, arr
 		arr
 
 	@parseACL = (acl) ->

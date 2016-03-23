@@ -80,6 +80,7 @@ class Diff
 				
 				debug "fetching data from server '#{@options[server].name}'"
 				
+				@[server].ignoredUsers = @options.diff.users?.ignore ? []
 				@[server].fetch next
 		
 		, (err) =>
