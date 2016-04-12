@@ -107,7 +107,13 @@ class PGDatabase extends Database
 			
 			options ?= {}
 			options.filter ?= []
-			where = ("#{f.column} #{f.operator} $#{i + 1}" for f, i in options.filter)
+			where = for f, i in options.filter
+				switch f.operator
+					when 'in'
+						"#{f.column} = any($#{i + 1})"
+					
+					else
+						"#{f.column} #{f.operator} $#{i + 1}"
 
 			@_query "select * from #{table}#{if where.length then " where #{where.join ' and '}" else ""};", (f.value for f in options.filter), (err, rows) ->
 				if err then return done err
@@ -273,6 +279,7 @@ class PGDatabase extends Database
 						func = new PGFunction
 						func.id = row.oid
 						func.name = PGFunction.normalizeName row.proname
+						func.output = PGFunction.parseOutput row.proname
 						func.owner = row.rolname
 						func.definition = row.prosrc
 						func.privileges = PGPrivilege.fromACL @ignoredUsers, row.proacl, func
@@ -534,15 +541,28 @@ class PGFunction extends Function
 				arg
 		
 		"#{parts[1]}(#{args.join ', '})"
-		
+	
+	@parseOutput: (name) ->
+		parts = name.match(/^([^\(]+)\(([^\)]*)\)$/)
+		args = parts[2].split(/,\s/).filter (arg) ->
+			if (/^OUT\s/i).test arg then return true
+			false
+
+		args.join ', '
+	
 	compare: (b) ->
 		txt = []
 
 		if @definition isnt b.definition
-			txt.push "drop function #{@name};" # drop or we might get error we can't update function when changes in arguments names
-			txt.push "#{@definition};"
-			txt.push "alter function #{@name}\n  owner to #{@owner};"
-			txt.push @privileges.compare()
+			if @output isnt b.output
+				txt.push "drop function #{@name};" # drop because of change in output parameters
+				txt.push "#{@definition};"
+				txt.push "alter function #{@name}\n  owner to #{@owner};"
+				txt.push @privileges.compare()
+			
+			else
+				txt.push "#{@definition};"
+				txt.push @privileges.compare b.privileges
 		
 		else
 			if @owner isnt b.owner
@@ -596,10 +616,16 @@ class PGPrivilege
 	constructor: ->
 		@grants = []
 	
-	@compare: (ignoredUsers, object, a, b = []) ->
+	@compare: (ignoredUsers, object, a, b = null) ->
 		txt = []
 		privileges = {}
 		target = "#{if object.__type is 'view' then 'table' else object.__type} #{object.name}"
+		publik = false
+		creating = false
+		
+		if not b?
+			creating = true
+			b = []
 
 		for privilege in a when privilege.grantee not in ignoredUsers
 			privileges[privilege.grantee] =
@@ -610,6 +636,8 @@ class PGPrivilege
 			privileges[privilege.grantee].b = privilege
 
 		for grantee, ab of privileges
+			if grantee is 'public' then publik = true
+			
 			if ab.a and ab.b
 				if ab.a.__string is ab.b.__string
 					continue
@@ -639,6 +667,10 @@ class PGPrivilege
 	
 			else
 				txt.push "revoke all on #{target}\n  from #{grantee};"
+		
+		
+		if not publik and creating
+			txt.push "revoke all on #{target}\n  from public;"
 		
 		if txt.length is 0
 			return null # no changes
@@ -714,6 +746,9 @@ class PGRecord extends Record
 				
 				else if Buffer.isBuffer value
 					"E'\\\\x#{value.toString 'hex'}'"
+				
+				else if value instanceof Date
+					return "'#{value.toISOString()}'"
 				
 				else if type in ['json', 'jsonb']
 					PGRecord.sanitizeValue JSON.stringify value

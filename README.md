@@ -76,6 +76,10 @@ To enable data synchronization, add `sync` section and specify tables to syncrho
 }
 ```
 
+## TODO
+
+- Dependencies
+
 <a name="license" />
 ## License
 
